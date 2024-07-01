@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Check Password Strength</h5>
+        <form id="passwordForm">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="password" placeholder="Enter your password">
+                    <div class="input-group-append">
+                        <span class="input-group-text">
+                            <i class="far fa-eye" id="togglePassword" style="cursor: pointer;"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Check Password Strength</button>
+        </form>
+        <div id="results" class="mt-4">
+            <h5>Password Strength:</h5>
+            <p id="regexChecks"></p>
+            <p id="score"></p>
+            <p id="scoreStatus"></p>
+            <p id="entropy"></p>
+            <p id="feedback"></p>
+            <p id="contentAnalysis"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        $("#passwordForm").on("submit", function(event){
+            event.preventDefault();
+            var password = $("#password").val();
+            $.ajax({
+                url: "/",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({password: password}),
+                success: function(data){
+                    var checks = data.regex_checks;
+                    $("#regexChecks").html("Regex Checks: <br>" +
+                        "digits: " + checks.digits + "<br>" +
+                        "length: " + checks.length + "<br>" +
+                        "lowercase: " + checks.lowercase + "<br>" +
+                        "special: " + checks.special + "<br>" +
+                        "uppercase: " + checks.uppercase);
+                    $("#score").text("Score: " + data.score);
+                    $("#entropy").text("Entropy: " + data.entropy);
+                    $("#feedback").text("Feedback: " + data.feedback.join(", "));
+                    $("#contentAnalysis").text("Content Analysis: " + (data.content_analysis ? "Common words detected" : "No common words detected"));
+
+                    var scoreStatus = "Weak";
+                    if (data.score >= 3) {
+                        scoreStatus = "Good";
+                    }
+                    $("#scoreStatus").text("Score Status: " + scoreStatus);
+                }
+            });
+        });
+
+        $("#togglePassword").on("click", function() {
+            var passwordField = $("#password");
+            var fieldType = passwordField.attr("type");
+
+            if (fieldType === "password") {
+                passwordField.attr("type", "text");
+                $(this).removeClass("fa-eye").addClass("fa-eye-slash");
+            } else {
+                passwordField.attr("type", "password");
+                $(this).removeClass("fa-eye-slash").addClass("fa-eye");
+            }
+        });
+    });
+</script>
+{% endblock %}
